@@ -16,7 +16,10 @@ export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: ()
     const a = document.createElement("a")
     a.href = url
     a.download = `${type}_${new Date().toISOString().split("T")[0]}.csv`
+    document.body.appendChild(a)
     a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
