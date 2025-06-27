@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -43,7 +42,7 @@ export function LoginDemo({ onLogin }: { onLogin: (user: any) => void }) {
         <div className="text-center">
           <h1 className="text-3xl font-bold text-sky-700">Sistema de Gestión</h1>
           <h2 className="text-xl font-semibold text-sky-600">Ausencias y Vacaciones</h2>
-          <p className="mt-2 text-gray-600">Versión Demo - Ingresa con tu legajo</p>
+          <p className="mt-2 text-gray-600">Demo - Ingresa con tu legajo</p>
         </div>
 
         <Card className="w-full">
