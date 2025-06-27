@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const users = {
   ADMIN001: { role: "admin", name: "Administrador Sistema", password: "admin123" },
@@ -18,23 +19,31 @@ export function LoginDemo({ onLogin }: { onLogin: (user: any) => void }) {
   const [legajo, setLegajo] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+    setLoading(true)
+
+    // Simular delay de autenticación
+    await new Promise((resolve) => setTimeout(resolve, 1000))
 
     const user = users[legajo as keyof typeof users]
     if (!user) {
       setError("Legajo no encontrado")
+      setLoading(false)
       return
     }
 
     if (user.password !== password) {
       setError("Contraseña incorrecta")
+      setLoading(false)
       return
     }
 
     onLogin({ ...user, legajo })
+    setLoading(false)
   }
 
   return (
@@ -43,7 +52,7 @@ export function LoginDemo({ onLogin }: { onLogin: (user: any) => void }) {
         <div className="text-center">
           <h1 className="text-3xl font-bold text-sky-700">Sistema de Gestión</h1>
           <h2 className="text-xl font-semibold text-sky-600">Ausencias y Vacaciones</h2>
-          <p className="mt-2 text-gray-600">Demo Funcional - Ingresa con tu legajo</p>
+          <p className="mt-2 text-gray-600">Demo 100% Funcional</p>
         </div>
 
         <Card className="w-full">
@@ -73,9 +82,13 @@ export function LoginDemo({ onLogin }: { onLogin: (user: any) => void }) {
                   required
                 />
               </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-              <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700">
-                Iniciar Sesión
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={loading}>
+                {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
               </Button>
             </form>
           </CardContent>

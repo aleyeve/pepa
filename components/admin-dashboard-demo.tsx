@@ -4,18 +4,45 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Users, Clock, CalendarDays, LogOut, Download } from "lucide-react"
 
-export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: () => void }) {
-  const handleDownloadCSV = (type: string) => {
-    const data =
-      type === "ausencias"
-        ? "Empleado,Fecha Inicio,Fecha Fin,Motivo,Estado\nJuan Pérez,15/01/2024,15/01/2024,Consulta médica,Pendiente\nMaría González,10/01/2024,12/01/2024,Enfermedad,Aprobado"
-        : "Empleado,Fecha Inicio,Fecha Fin,Días,Estado\nJuan Pérez,01/02/2024,07/02/2024,7,Pendiente\nMaría González,15/03/2024,22/03/2024,8,Aprobado"
+export function AdminDashboardDemo({
+  user,
+  absences,
+  vacations,
+  onLogout,
+  onViewChange,
+}: {
+  user: any
+  absences: any[]
+  vacations: any[]
+  onLogout: () => void
+  onViewChange: (view: string) => void
+}) {
+  const pendingAbsences = absences.filter((a) => a.status === "pending")
+  const pendingVacations = vacations.filter((v) => v.status === "pending")
 
-    const blob = new Blob([data], { type: "text/csv" })
+  const handleDownloadCSV = (type: string) => {
+    let data = ""
+    let filename = ""
+
+    if (type === "ausencias") {
+      data =
+        "Empleado,Legajo,Fecha Inicio,Fecha Fin,Motivo,Estado\n" +
+        absences
+          .map((a) => `${a.employee},${a.legajo},${a.startDate},${a.endDate},"${a.reason}",${a.status}`)
+          .join("\n")
+      filename = `ausencias_${new Date().toISOString().split("T")[0]}.csv`
+    } else {
+      data =
+        "Empleado,Legajo,Fecha Inicio,Fecha Fin,Días,Estado\n" +
+        vacations.map((v) => `${v.employee},${v.legajo},${v.startDate},${v.endDate},${v.days},${v.status}`).join("\n")
+      filename = `vacaciones_${new Date().toISOString().split("T")[0]}.csv`
+    }
+
+    const blob = new Blob([data], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `${type}_${new Date().toISOString().split("T")[0]}.csv`
+    a.download = filename
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -48,9 +75,9 @@ export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: ()
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-amber-500" />
-                  <span className="text-2xl font-bold">2</span>
+                  <span className="text-2xl font-bold">{pendingAbsences.length}</span>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => onViewChange("absences")}>
                   Gestionar
                 </Button>
               </div>
@@ -66,9 +93,9 @@ export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: ()
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-5 w-5 text-amber-500" />
-                  <span className="text-2xl font-bold">1</span>
+                  <span className="text-2xl font-bold">{pendingVacations.length}</span>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => onViewChange("vacations")}>
                   Gestionar
                 </Button>
               </div>
@@ -86,7 +113,7 @@ export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: ()
                   <Users className="h-5 w-5 text-sky-500" />
                   <span className="text-2xl font-bold">2</span>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={() => onViewChange("employees")}>
                   Ver todos
                 </Button>
               </div>
@@ -101,26 +128,41 @@ export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: ()
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-start gap-2 pb-3 border-b">
-                  <Clock className="h-5 w-5 text-amber-500 mt-1" />
-                  <div className="flex-1">
-                    <p className="font-medium">Juan Pérez (EMP001)</p>
-                    <p className="text-sm">15 de Enero de 2024</p>
-                    <p className="text-sm text-gray-500">Consulta médica</p>
+                {absences.slice(0, 3).map((absence) => (
+                  <div key={absence.id} className="flex items-start gap-2 pb-3 border-b">
+                    <Clock
+                      className={`h-5 w-5 mt-1 ${
+                        absence.status === "pending"
+                          ? "text-amber-500"
+                          : absence.status === "approved"
+                            ? "text-green-500"
+                            : "text-red-500"
+                      }`}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">
+                        {absence.employee} ({absence.legajo})
+                      </p>
+                      <p className="text-sm">
+                        {absence.startDate} - {absence.endDate}
+                      </p>
+                      <p className="text-sm text-gray-500">{absence.reason.substring(0, 30)}...</p>
+                    </div>
+                    {absence.status === "pending" ? (
+                      <Button
+                        size="sm"
+                        className="bg-sky-600 hover:bg-sky-700"
+                        onClick={() => onViewChange("absences")}
+                      >
+                        Revisar
+                      </Button>
+                    ) : (
+                      <span className={`text-sm ${absence.status === "approved" ? "text-green-600" : "text-red-600"}`}>
+                        {absence.status === "approved" ? "Aprobado" : "Rechazado"}
+                      </span>
+                    )}
                   </div>
-                  <Button size="sm" className="bg-sky-600 hover:bg-sky-700">
-                    Revisar
-                  </Button>
-                </div>
-                <div className="flex items-start gap-2 pb-3 border-b">
-                  <Clock className="h-5 w-5 text-green-500 mt-1" />
-                  <div className="flex-1">
-                    <p className="font-medium">María González (EMP002)</p>
-                    <p className="text-sm">10-12 de Enero de 2024</p>
-                    <p className="text-sm text-gray-500">Enfermedad</p>
-                  </div>
-                  <span className="text-sm text-green-600">Aprobado</span>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
@@ -134,11 +176,14 @@ export function AdminDashboardDemo({ user, onLogout }: { user: any; onLogout: ()
               <div className="space-y-4">
                 <Button onClick={() => handleDownloadCSV("ausencias")} className="w-full bg-sky-600 hover:bg-sky-700">
                   <Download className="h-4 w-4 mr-2" />
-                  Descargar Reporte de Ausencias
+                  Descargar Reporte de Ausencias ({absences.length})
                 </Button>
                 <Button onClick={() => handleDownloadCSV("vacaciones")} className="w-full bg-sky-600 hover:bg-sky-700">
                   <Download className="h-4 w-4 mr-2" />
-                  Descargar Reporte de Vacaciones
+                  Descargar Reporte de Vacaciones ({vacations.length})
+                </Button>
+                <Button onClick={() => onViewChange("reports")} variant="outline" className="w-full">
+                  Ver Reportes Detallados
                 </Button>
               </div>
             </CardContent>
